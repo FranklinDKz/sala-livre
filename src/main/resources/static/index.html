@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#173249" />
+    <title>Sala Livre — agenda de reservas</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="Sala Livre, início"
+          ><span class="brand-symbol" aria-hidden="true"
+            ><i></i><i></i><i></i><i></i></span
+          ><span>sala<span class="brand-light">livre</span></span></a
+        >
+        <nav aria-label="Navegação principal">
+          <a class="nav-current" href="/">Agenda</a
+          ><a href="#reservations">Reservas do dia</a
+          ><a href="/actuator/health" target="_blank" rel="noopener"
+            >Status da API</a
+          >
+        </nav>
+        <span class="header-caption"
+          >Organize encontros sem esbarrar em horários</span
+        >
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="heading-row">
+        <div>
+          <div class="location-line">
+            <span class="location-icon" aria-hidden="true">⌖</span> Agenda
+            compartilhada de espaços
+          </div>
+          <h1>Veja onde cabe<br />o próximo encontro.</h1>
+          <p class="intro">
+            Consulte a ocupação das salas e reserve um horário disponível em
+            poucos passos.
+          </p>
+        </div>
+        <button class="primary-button" id="new-booking" type="button">
+          <span aria-hidden="true">＋</span> Nova reserva
+        </button>
+      </div>
+
+      <section class="planner" aria-labelledby="planner-title">
+        <div class="planner-toolbar">
+          <div class="day-navigation">
+            <span class="toolbar-caption">Dia selecionado</span>
+            <div class="day-controls">
+              <button
+                class="square-button"
+                id="previous-day"
+                type="button"
+                aria-label="Dia anterior"
+              >
+                ‹</button
+              ><strong id="selected-day">Carregando...</strong
+              ><button
+                class="square-button"
+                id="next-day"
+                type="button"
+                aria-label="Próximo dia"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <label class="date-input"
+              >Ir para a data
+              <input
+                type="date"
+                id="date-picker"
+                aria-label="Escolher data" /></label
+            ><button id="today-button" class="secondary-button" type="button">
+              Hoje
+            </button>
+            <div class="toolbar-divider"></div>
+            <div class="count-block">
+              <strong id="room-count">—</strong><span>salas</span>
+            </div>
+            <div class="count-block">
+              <strong id="booking-count">—</strong><span>reservas</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="planner-body"
+          tabindex="0"
+          aria-label="Grade de horários; deslize ou use as setas para ver outros horários"
+        >
+          <div class="planner-header">
+            <div class="room-column-header">Sala e localização</div>
+            <div
+              class="timeline-header"
+              id="timeline-header"
+              aria-label="Horários de 07:00 a 22:00"
+            ></div>
+          </div>
+          <div id="room-rows" aria-live="polite"></div>
+        </div>
+        <div class="planner-footer">
+          <span class="legend-item"
+            ><i class="legend-booked"></i> Reservado</span
+          ><span class="legend-item"
+            ><i class="legend-free"></i> Horário livre</span
+          ><span class="planner-hint"
+            >Clique em “Nova reserva” para escolher uma sala e um
+            intervalo.</span
+          >
+          <span class="mobile-scroll-hint"
+            >Deslize a grade para ver outros horários.</span
+          >
+        </div>
+      </section>
+
+      <section
+        class="reservations-section"
+        id="reservations"
+        aria-labelledby="reservations-title"
+      >
+        <div class="section-heading">
+          <div>
+            <h2 id="reservations-title">Reservas do dia</h2>
+            <p>
+              Os cancelamentos continuam no histórico, mas liberam o horário da
+              sala.
+            </p>
+          </div>
+          <span id="visible-count" class="section-count">0 registros</span>
+        </div>
+        <div id="reservation-list" class="reservation-list"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <div class="empty-illustration" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <h3>Nenhuma reserva nesta data</h3>
+          <p>
+            As salas estão disponíveis. Abra uma reserva para começar a
+            organizar o dia.
+          </p>
+          <button type="button" id="empty-booking" class="text-button">
+            Criar uma reserva
+          </button>
+        </div>
+      </section>
+      <footer>
+        Salas e horários em um só lugar.
+        <a
+          href="https://github.com/FranklinDKz/sala-livre"
+          target="_blank"
+          rel="noopener"
+          >Código no GitHub ↗</a
+        >
+      </footer>
+    </main>
+
+    <dialog id="booking-dialog" aria-labelledby="dialog-title">
+      <form id="booking-form">
+        <div class="dialog-head">
+          <div>
+            <span>Nova reserva</span>
+            <h2 id="dialog-title">Escolha sala e horário</h2>
+            <p id="dialog-date"></p>
+          </div>
+          <button
+            type="button"
+            class="close-button"
+            id="close-dialog"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+        </div>
+        <div class="form-body">
+          <label
+            >Sala<select
+              name="roomId"
+              id="room-select"
+              required
+            ></select></label
+          ><label
+            >Motivo da reserva<input
+              name="title"
+              type="text"
+              maxlength="120"
+              required
+              placeholder="Ex.: Reunião de planejamento" /></label
+          ><label
+            >Seu nome<input
+              name="requester"
+              type="text"
+              maxlength="80"
+              required
+              placeholder="Ex.: Marina Costa"
+          /></label>
+          <div class="time-fields">
+            <label
+              >Início<select
+                name="start"
+                id="start-time"
+                required
+              ></select></label
+            ><label
+              >Fim<select name="end" id="end-time" required></select
+            ></label>
+          </div>
+          <p class="form-note">
+            Horários entre 07:00 e 22:00, em intervalos de 30 minutos. Duração
+            máxima: 8 horas.
+          </p>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="secondary-button" id="cancel-dialog">
+            Voltar</button
+          ><button type="submit" class="primary-button" id="save-booking">
+            Confirmar reserva
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
